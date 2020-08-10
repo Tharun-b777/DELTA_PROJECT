@@ -1,6 +1,0 @@
-#!/bin/bash
-flask
-flask-sqlalchemy
-flask-marshmallow
-marshmallow-sqlalchemy
-SQLAlchemy
