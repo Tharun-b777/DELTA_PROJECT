@@ -130,29 +130,9 @@ def modify_office(id):
 
 @app.route('/api/post_office', methods=['GET'])
 def qry_select():
-    ref = {
-        'id': 00,
-        'Officename': "",
-        'Pincode': "",
-        'Officetype': "",
-        'Dstats': "",
-        'Divname': "",
-        'Regname': "",
-        'Circlename': "",
-        'Taluk': "",
-        'Distname': "",
-        'Statename': "",
-        'Phnum': "",
-        'RHO': "",
-        'RSO': ""
-
-    }
-    for key in ref:
-        if key in request.args:
-            ref[key] = request.args[key]
-    null = [k for k, v in ref.items() if not v or id == 00]
-    for key in null:
-        ref.pop(key)
+    ref = {}
+    for key in request.args:
+        ref[key] = request.args[key].upper()
     offices = post_office.query.filter_by(**ref)
     results = posts.dump(offices)
     return jsonify(results)
