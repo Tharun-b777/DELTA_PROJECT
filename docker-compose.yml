@@ -1,0 +1,21 @@
+version: '3'
+
+volumes:
+    DATABASE:
+
+services:
+    api:
+        build:
+            context: ./
+        ports:
+            - "5000"
+        volumes:
+            - DATABASE:/home
+
+    load-balancer:
+        build:
+            context: ./load_balancer/
+        depends_on:
+            - api
+        ports:
+            - "8080:80"
