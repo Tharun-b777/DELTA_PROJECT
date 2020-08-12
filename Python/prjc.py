@@ -46,7 +46,6 @@ class post_office(db.Model):
 class post_office_schema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = post_office
-        load_instance = True
 
 
 post = post_office_schema()
@@ -99,7 +98,8 @@ def delete_office(id):
     try:
         db.session.delete(office)
         db.session.commit()
-        return post.jsonify(office)
+        result = post.dump(office)
+        return jsonify(result)
     except:
         return jsonify({'data': "not_existing"})
 
