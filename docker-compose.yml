@@ -13,9 +13,10 @@ services:
             - DATABASE:/home
 
     load-balancer:
-        build:
-            context: ./load_balancer/
+        image: nginx:latest
         depends_on:
             - api
         ports:
             - "8080:80"
+        volumes:
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf

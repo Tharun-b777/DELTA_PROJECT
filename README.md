@@ -1,5 +1,5 @@
 # DELTA_PROJECT
-Use url localhost:8080/app1/api/post_office
+Use url localhost:8080/api/post_office
 
 GET METHODS
 
