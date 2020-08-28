@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import *
 import csv
-
+import datetime
 engine = create_engine('sqlite:////home/data.db')
 Base = declarative_base()
 
@@ -27,6 +27,14 @@ class post_office(Base):
     RSO = Column(String(50))
 
 
+class users(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(20))
+    passwd = Column(String(100))
+    time = Column(DateTime, default=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+
+
 r = {
     'Officename': " ",
     'Pincode': " ",
@@ -43,8 +51,11 @@ r = {
     'RSO': " "
 
 }
+
+
 Session = sessionmaker(bind=engine)
 session = Session()
+users.__table__.create(bind=engine)
 post_office.__table__.create(bind=engine, checkfirst=True)
 with open('data.csv') as f:
     lines = csv.DictReader(f)

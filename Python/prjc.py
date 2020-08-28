@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-from flask import Flask, request, jsonify, abort
+from flask import Flask, request, jsonify, abort, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+import datetime
+import jwt
+from passlib.hash import sha256_crypt
 app = Flask(__name__)
 app.config["DEBUG"] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/data.db'
 app.config['JSON_SORT_KEYS'] = False
+app.config['SECRET_KEY']="secretkey"
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
@@ -43,6 +47,34 @@ class post_office(db.Model):
         self.RSO = kwargs['RSO']
 
 
+class users(db.Model):
+    ___tasblename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20), unique=True)
+    passwd = db.Column(db.String(100))
+    time = db.Column(
+        db.DateTime, default=datetime.datetime.utcnow() + datetime.timedelta(minutes=1))
+
+    def __init__(self, name, passwd):
+        self.name = name
+        self.passwd = passwd
+
+
+def token_req(f):
+    def check(*args,**kwargs):
+        token = request.headers.get('token')
+        if not token:
+            return jsonify({'message': 'Token is missing'})
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'])
+        except:
+            return jsonify({'message': 'Token is invalid'})
+        return f(*args,**kwargs)
+    check.__name__=f.__name__
+    return check
+
+
+
 class post_office_schema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = post_office
@@ -60,6 +92,7 @@ def api_all():
 
 
 @app.route('/api/post_office', methods=['POST'])
+@token_req
 def new_office():
     r = {
         'Officename': " ",
@@ -93,6 +126,7 @@ def new_office():
 
 
 @app.route('/api/post_office/<int:id>', methods=['DELETE'])
+@token_req
 def delete_office(id):
     office = post_office.query.get(id)
     try:
@@ -105,6 +139,7 @@ def delete_office(id):
 
 
 @app.route('/api/post_office/<int:id>', methods=['PUT'])
+@token_req
 def modify_office(id):
 
     office = post_office.query.get(id)
@@ -136,6 +171,35 @@ def qry_select():
     offices = post_office.query.filter_by(**ref)
     results = posts.dump(offices)
     return jsonify(results)
+
+
+@app.route('/login')
+def login():
+    auth = request.authorization
+    if auth and auth.password and auth.username:
+        a = users.query.filter_by(name=auth.username).first()
+        # print(a.time)
+        # print(datetime.datetime.utcnow())
+        if a:
+            # a.time = datetime.datetime.utcnow()
+            if  sha256_crypt.verify(auth.password,a.passwd):
+                if a.time <= datetime.datetime.utcnow():
+                    a.time = datetime.datetime.utcnow() + datetime.timedelta(minutes=1)
+                    db.session.commit()
+                    token = jwt.encode({'user': auth.username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=1)}, app.config['SECRET_KEY'])
+                    return jsonify({'token': token.decode('utf-8')})
+                return jsonify({'token': 'Not expired'})
+            else:
+                return ("username/password not matching")
+        passwd=sha256_crypt.encrypt(auth.password)
+        info = users(auth.username, passwd)
+        db.session.add(info)
+        db.session.commit()
+        token= jwt.encode({'user': auth.username, 'exp': datetime.datetime.utcnow(
+        ) + datetime.timedelta(minutes=1)}, app.config['SECRET_KEY'])
+        return jsonify({'token': token.decode('utf-8')})
+    return make_response('could not verify!', 401, {'WWW-Authenticate': 'Basic realm="Login Required'})
+
 
 
 app.run(host='0.0.0.0', port=5000)

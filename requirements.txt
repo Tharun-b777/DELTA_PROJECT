@@ -1,6 +1,7 @@
-
+passlib
 flask
 flask-sqlalchemy
 flask-marshmallow
 marshmallow-sqlalchemy
 SQLAlchemy
+pyjwt

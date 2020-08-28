@@ -1,7 +1,7 @@
 version: '3'
 
 volumes:
-    DATABASE:
+    DATABASES:
 
 services:
     api:
@@ -10,7 +10,7 @@ services:
         ports:
             - "5000"
         volumes:
-            - DATABASE:/home
+            - DATABASES:/home
 
     load-balancer:
         image: nginx:latest
